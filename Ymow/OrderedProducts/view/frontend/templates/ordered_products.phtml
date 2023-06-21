@@ -1,0 +1,84 @@
+<?php
+use Magento\Framework\App\Action\Action;
+
+/**
+ * @var $block \Ymow\OrderedProducts\Block\Account\OrderedProducts
+ * @var $escaper \Magento\Framework\Escaper
+ */
+?>
+
+<?php
+$themeHelper = $this->helper('MGS\ThemeSettings\Helper\Config');
+$imagehelper = $this->helper('Magento\Catalog\Helper\Image');
+$size = $themeHelper->getImageSize();
+$image = 'category_page_grid';
+?>
+
+<div class="my-ordered-products">
+    <table class="data table table-order-items" id="ordered-products">
+        <thead>
+        <tr>
+            <th><?= __('SKU') ?></th>
+            <th><?= __('Image') ?></th>
+            <th><?= __('Name') ?></th>
+            <th><?= __('Qty') ?></th>
+            <th><?= __('Add to Cart') ?></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($block->getOrderedProducts() as $product): ?>
+            <?php
+                $item = $block->getProduct($product->getSku());
+                if(!$item) continue;
+                $productImage = $imagehelper->init($item, $image)->resize($size['width'], $size['height'])->getUrl();
+                $postParams = $block->getAddToCartPostParams($item);
+            ?>
+            <tr>
+                <td><?= $escaper->escapeHtml($product->getSku()) ?></td>
+                <td>
+                    <img src="<?= $escaper->escapeHtml($productImage) ?>" alt="<?= $escaper->escapeHtml($product->getName()) ?>" />
+                </td>
+                <td>
+                    <a href="<?= $escaper->escapeUrl($block->getUrlProduct($product->getId())) ?>"><?= $escaper->escapeHtml($product->getName()) ?></a>
+                </td>
+                <td>
+                    <input type="number" name="qty[<?= $escaper->escapeHtml($product->getId()) ?>]" value="1" class="qty-input" required="true"/>
+                </td>
+                <td>
+                    <div class="action">
+                        <form data-role="tocart-form"
+                              data-product-sku="<?= $escaper->escapeHtml($product->getSku()) ?>"
+                              action="<?= $escaper->escapeUrl($postParams['action']) ?>"
+                              method="post">
+                            <input type="hidden"
+                                   name="product"
+                                   value="<?= /* @noEscape */
+                                   $postParams['data']['product'] ?>">
+                            <input type="hidden"
+                                   name="<?= /* @noEscape */
+                                   Action::PARAM_NAME_URL_ENCODED ?>"
+                                   value="<?=
+                                   /* @noEscape */
+                                   $postParams['data'][Action::PARAM_NAME_URL_ENCODED]
+                                   ?>">
+                            <input type="hidden" name="qty" value="1" class="qty-input-hidden"/>
+                            <?= $block->getBlockHtml('formkey') ?>
+                            <button type="button"
+                                    title="<?= $escaper->escapeHtmlAttr(__('Add to Cart')) ?>"
+                                    class="action tocart btn-cart primary ">
+                                <span class="icon pe-7s-shopbag"></span>
+                                <span class="text"><?= $escaper->escapeHtml(__('Add to Cart')) ?></span>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+<script type="text/x-magento-init">
+    {
+        "#maincontent": {"orderedProducts": {}}
+    }
+</script>
